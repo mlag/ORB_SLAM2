@@ -1,7 +1,3 @@
-//
-// Created by tux on 2/14/19.
-//
-
 /**
 * This file is part of ORB-SLAM2.
 *
@@ -27,7 +23,6 @@
 #include <chrono>
 #include <experimental/filesystem>
 #include <fstream>
-#include <iomanip>
 #include <iostream>
 
 #include <opencv2/core/core.hpp>
@@ -35,26 +30,44 @@
 #include "System.h"
 
 using namespace std;
+
 namespace fs = std::experimental::filesystem;
 
-void LoadImages(const string &strSequence, vector<string> &vstrImageFilenames,
-                vector<double> &vTimestamps);
+//void LoadImages(const string &strAssociationFilename, vector<string> &vstrImageFilenamesRGB,
+//                vector<string> &vstrImageFilenamesD, vector<double> &vTimestamps);
+
+void LoadImages(const string &strPathToSequence, vector<string> &vstrImageFilenames, vector<double> &vTimestamps);
 
 int main(int argc, char **argv) {
-    if (argc != 4) {
-        cerr << endl << "Usage: ./mono_uzl_audi path_to_vocabulary path_to_settings path_to_sequence" << endl;
+    if (argc != 5) {
+        cerr << endl << "Usage: ./rgbd_tum path_to_vocabulary path_to_settings path_to_sequence path_to_association"
+             << endl;
         return 1;
     }
 
     // Retrieve paths to images
-    vector<string> vstrImageFilenames;
-    vector<double> vTimestamps;
-    LoadImages(string(argv[3]) + "/rgb", vstrImageFilenames, vTimestamps);
+    vector<string> vstrImageFilenamesRGB;
+    vector<string> vstrImageFilenamesD;
+    vector<double> vTimestampsRGB;
+    vector<double> vTimestampsD;
+//    string strAssociationFilename = string(argv[4]);
+    const auto dataset_dir = std::string{argv[3]};
 
-    int nImages = vstrImageFilenames.size();
+    LoadImages(dataset_dir + "/rgb", vstrImageFilenamesRGB, vTimestampsRGB);
+    LoadImages(dataset_dir + "/depth", vstrImageFilenamesD, vTimestampsD);
+
+    // Check consistency in the number of images and depthmaps
+    int nImages = vstrImageFilenamesRGB.size();
+    if (vstrImageFilenamesRGB.empty()) {
+        cerr << endl << "No images found in provided path." << endl;
+        return 1;
+    } else if (vstrImageFilenamesD.size() != vstrImageFilenamesRGB.size()) {
+        cerr << endl << "Different number of images for rgb and depth." << endl;
+        return 1;
+    }
 
     // Create SLAM system. It initializes all system threads and gets ready to process frames.
-    ORB_SLAM2::System SLAM(argv[1], argv[2], ORB_SLAM2::System::MONOCULAR, true);
+    ORB_SLAM2::System SLAM(argv[1], argv[2], ORB_SLAM2::System::RGBD, true);
 
     // Vector for tracking time statistics
     vector<float> vTimesTrack;
@@ -65,36 +78,37 @@ int main(int argc, char **argv) {
     cout << "Images in the sequence: " << nImages << endl << endl;
 
     // Main loop
+//    cv::Mat imRGB, imD;
+    for (int i = 0; i < nImages; i++) {
+        // Read image and depthmap from file
 
+        const auto imRGB = cv::imread(vstrImageFilenamesRGB.at(i), cv::IMREAD_UNCHANGED);
+        const auto imD = cv::imread(vstrImageFilenamesD.at(i), cv::IMREAD_UNCHANGED);
+        double tframe = vTimestampsRGB[i];
 
-    cv::Mat im;
-    for (int ni = 0; ni < nImages; ni++) {
-        // Read image from file
-        im = cv::imread(vstrImageFilenames[ni], CV_LOAD_IMAGE_UNCHANGED);
-        double tframe = vTimestamps[ni];
-
-        if (im.empty()) {
-            cerr << endl << "Failed to load image at: " << vstrImageFilenames[ni] << endl;
+        if (imRGB.empty()) {
+            cerr << endl << "Failed to load image at: "
+                 << string(argv[3]) << "/" << vstrImageFilenamesRGB[i] << endl;
             return 1;
         }
 
         std::chrono::steady_clock::time_point t1 = std::chrono::steady_clock::now();
 
         // Pass the image to the SLAM system
-        SLAM.TrackMonocular(im, tframe);
+        SLAM.TrackRGBD(imRGB, imD, tframe);
 
         std::chrono::steady_clock::time_point t2 = std::chrono::steady_clock::now();
 
         double ttrack = std::chrono::duration_cast<std::chrono::duration<double> >(t2 - t1).count();
 
-        vTimesTrack[ni] = ttrack;
+        vTimesTrack[i] = ttrack;
 
         // Wait to load the next frame
         double T = 0;
-        if (ni < nImages - 1)
-            T = vTimestamps[ni + 1] - tframe;
-        else if (ni > 0)
-            T = tframe - vTimestamps[ni - 1];
+        if (i < nImages - 1)
+            T = vTimestampsRGB[i + 1] - tframe;
+        else if (i > 0)
+            T = tframe - vTimestampsRGB[i - 1];
 
         if (ttrack < T)
             usleep((T - ttrack) * 1e6);
@@ -114,10 +128,37 @@ int main(int argc, char **argv) {
     cout << "mean tracking time: " << totaltime / nImages << endl;
 
     // Save camera trajectory
+    SLAM.SaveTrajectoryTUM("CameraTrajectory.txt");
     SLAM.SaveKeyFrameTrajectoryTUM("KeyFrameTrajectory.txt");
 
     return 0;
 }
+
+//void LoadImages(const string &strAssociationFilename, vector<string> &vstrImageFilenamesRGB,
+//                vector<string> &vstrImageFilenamesD, vector<double> &vTimestamps) {
+//    ifstream fAssociation;
+//    fAssociation.open(strAssociationFilename.c_str());
+//    while (!fAssociation.eof()) {
+//        string s;
+//        getline(fAssociation, s);
+//        if (!s.empty()) {
+//            stringstream ss;
+//            ss << s;
+//            double t;
+//            string sRGB, sD;
+//            ss >> t;
+//            vTimestamps.push_back(t);
+//            ss >> sRGB;
+//            vstrImageFilenamesRGB.push_back(sRGB);
+//            ss >> t;
+//            ss >> sD;
+//            vstrImageFilenamesD.push_back(sD);
+//
+//        }
+//    }
+//}
+//
+//
 
 void LoadImages(const string &strPathToSequence, vector<string> &vstrImageFilenames, vector<double> &vTimestamps) {
     std::vector<fs::path> image_paths;
