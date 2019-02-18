@@ -24,12 +24,11 @@ endif()
 find_package(Eigen3 3.1.0 REQUIRED)
 find_package(Pangolin REQUIRED)
 
-include_directories(
-${PROJECT_SOURCE_DIR}
-${PROJECT_SOURCE_DIR}/include
-${EIGEN3_INCLUDE_DIR}
-${Pangolin_INCLUDE_DIRS}
-)
+set(INCLUDE_DIRS ${PROJECT_SOURCE_DIR}  ${PROJECT_SOURCE_DIR}/include)
+
+include_directories(${INCLUDE_DIRS}
+                    ${EIGEN3_INCLUDE_DIR}
+                    ${Pangolin_INCLUDE_DIRS})
 
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/lib)
 
@@ -85,6 +84,10 @@ Examples/Stereo/stereo_euroc.cc)
 target_link_libraries(stereo_euroc ${PROJECT_NAME})
 
 
+add_executable(stereo_uzl_audi
+        Examples/Stereo/stereo_uzl_audi.cc)
+target_link_libraries(stereo_uzl_audi ${PROJECT_NAME} stdc++fs)
+
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/Examples/Monocular)
 
 add_executable(mono_tum
@@ -102,3 +105,4 @@ target_link_libraries(mono_euroc ${PROJECT_NAME})
 add_executable(mono_uzl_audi Examples/Monocular/mono_uzl_audi.cc)
 target_link_libraries(mono_uzl_audi ${PROJECT_NAME} stdc++fs)
 
+set_property(TARGET ORB_SLAM2 PROPERTY INCLUDE_DIRS ${INCLUDE_DIRS})
