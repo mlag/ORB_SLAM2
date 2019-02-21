@@ -24,6 +24,9 @@ endif()
 find_package(Eigen3 3.1.0 REQUIRED)
 find_package(Pangolin REQUIRED)
 
+add_subdirectory(./Thirdparty/g2o)
+add_subdirectory(./Thirdparty/DBoW2)
+
 set(INCLUDE_DIRS ${PROJECT_SOURCE_DIR}  ${PROJECT_SOURCE_DIR}/include)
 
 include_directories(${INCLUDE_DIRS}
