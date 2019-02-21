@@ -65,12 +65,14 @@ ${PROJECT_SOURCE_DIR}/Thirdparty/DBoW2/lib/libDBoW2.so
 ${PROJECT_SOURCE_DIR}/Thirdparty/g2o/lib/libg2o.so
 )
 
-# Build examples
+set_property(TARGET ORB_SLAM2 PROPERTY INCLUDE_DIRS ${INCLUDE_DIRS})
+
+
+if(BUILD_EXAMPLES)
 
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/Examples/RGB-D)
 
-add_executable(rgbd_tum
-Examples/RGB-D/rgbd_tum.cc)
+add_executable(rgbd_tum Examples/RGB-D/rgbd_tum.cc)
 target_link_libraries(rgbd_tum ${PROJECT_NAME})
 
 add_executable(rgbd_uzl_audi Examples/RGB-D/rgbd_uzl_audi.cc)
@@ -78,34 +80,27 @@ target_link_libraries(rgbd_uzl_audi ${PROJECT_NAME} stdc++fs)
 
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/Examples/Stereo)
 
-add_executable(stereo_kitti
-Examples/Stereo/stereo_kitti.cc)
+add_executable(stereo_kitti Examples/Stereo/stereo_kitti.cc)
 target_link_libraries(stereo_kitti ${PROJECT_NAME})
 
-add_executable(stereo_euroc
-Examples/Stereo/stereo_euroc.cc)
+add_executable(stereo_euroc Examples/Stereo/stereo_euroc.cc)
 target_link_libraries(stereo_euroc ${PROJECT_NAME})
 
-
-add_executable(stereo_uzl_audi
-        Examples/Stereo/stereo_uzl_audi.cc)
+add_executable(stereo_uzl_audi Examples/Stereo/stereo_uzl_audi.cc)
 target_link_libraries(stereo_uzl_audi ${PROJECT_NAME} stdc++fs)
 
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/Examples/Monocular)
 
-add_executable(mono_tum
-Examples/Monocular/mono_tum.cc)
+add_executable(mono_tum Examples/Monocular/mono_tum.cc)
 target_link_libraries(mono_tum ${PROJECT_NAME})
 
-add_executable(mono_kitti
-Examples/Monocular/mono_kitti.cc)
+add_executable(mono_kitti Examples/Monocular/mono_kitti.cc)
 target_link_libraries(mono_kitti ${PROJECT_NAME})
 
-add_executable(mono_euroc
-Examples/Monocular/mono_euroc.cc)
+add_executable(mono_euroc Examples/Monocular/mono_euroc.cc)
 target_link_libraries(mono_euroc ${PROJECT_NAME})
 
 add_executable(mono_uzl_audi Examples/Monocular/mono_uzl_audi.cc)
 target_link_libraries(mono_uzl_audi ${PROJECT_NAME} stdc++fs)
 
-set_property(TARGET ORB_SLAM2 PROPERTY INCLUDE_DIRS ${INCLUDE_DIRS})
+ENDIF()
