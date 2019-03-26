@@ -490,4 +490,13 @@ vector<cv::KeyPoint> System::GetTrackedKeyPointsUn()
     return mTrackedKeyPointsUn;
 }
 
+cv::Mat System::RetrieveOutputImage() {
+    if(mpViewer && mpFrameDrawer) {
+        return mpFrameDrawer->RetrieveFrame();
+    }
+    else {
+        return cv::Mat();
+    }
+}
+
 } //namespace ORB_SLAM

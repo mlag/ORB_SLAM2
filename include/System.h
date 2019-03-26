@@ -123,6 +123,9 @@ public:
     std::vector<MapPoint*> GetTrackedMapPoints();
     std::vector<cv::KeyPoint> GetTrackedKeyPointsUn();
 
+    // Graphical Output
+    cv::Mat RetrieveOutputImage();
+
 private:
 
     // Input sensor

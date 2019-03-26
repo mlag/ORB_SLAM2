@@ -46,7 +46,9 @@ public:
     void Update(Tracking *pTracker);
 
     // Draw last processed frame.
-    cv::Mat DrawFrame();
+    void DrawFrame();
+
+    cv::Mat RetrieveFrame();
 
 protected:
 
@@ -66,6 +68,17 @@ protected:
     Map* mpMap;
 
     std::mutex mMutex;
+
+private:
+
+    struct OutputImages {
+        cv::Mat mImageBufferCurr;
+        std::array<std::mutex, 3> mMutexes;
+        std::array<cv::Mat,3> mImageBuffers;
+
+        cv::Mat mImageInternal;
+
+    } mOutputImages;
 };
 
 } //namespace ORB_SLAM

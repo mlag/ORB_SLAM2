@@ -56,6 +56,8 @@ public:
 
     void Release();
 
+    cv::Mat RetrieveOutputFrame();
+
 private:
 
     bool Stop();

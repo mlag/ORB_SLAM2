@@ -25,6 +25,8 @@
 #include <opencv2/highgui/highgui.hpp>
 
 #include<mutex>
+#include <include/FrameDrawer.h>
+
 
 namespace ORB_SLAM2
 {
@@ -35,9 +37,9 @@ FrameDrawer::FrameDrawer(Map* pMap):mpMap(pMap)
     mIm = cv::Mat(480,640,CV_8UC3, cv::Scalar(0,0,0));
 }
 
-cv::Mat FrameDrawer::DrawFrame()
+void FrameDrawer::DrawFrame()
 {
-    cv::Mat im;
+    cv::Mat& im = mOutputImages.mImageInternal;
     vector<cv::KeyPoint> vIniKeys; // Initialization: KeyPoints in reference frame
     vector<int> vMatches; // Initialization: correspondeces with reference keypoints
     vector<cv::KeyPoint> vCurrentKeys; // KeyPoints in current frame
@@ -119,10 +121,17 @@ cv::Mat FrameDrawer::DrawFrame()
         }
     }
 
-    cv::Mat imWithInfo;
-    DrawTextInfo(im,state, imWithInfo);
 
-    return imWithInfo;
+
+    for(;;) {
+        for(size_t buffer_id=1;buffer_id<2;++buffer_id) {
+            std::unique_lock<std::mutex> lock{mOutputImages.mMutexes.at(buffer_id), std::defer_lock_t{}};
+            if(lock.try_lock()) {
+                DrawTextInfo(im, state, mOutputImages.mImageBuffers.at(buffer_id));
+                return;
+            }
+        }
+    }
 }
 
 
@@ -157,7 +166,8 @@ void FrameDrawer::DrawTextInfo(cv::Mat &im, int nState, cv::Mat &imText)
     int baseline=0;
     cv::Size textSize = cv::getTextSize(s.str(),cv::FONT_HERSHEY_PLAIN,1,1,&baseline);
 
-    imText = cv::Mat(im.rows+textSize.height+10,im.cols,im.type());
+    imText.create(im.rows+textSize.height+10,im.cols,im.type());
+
     im.copyTo(imText.rowRange(0,im.rows).colRange(0,im.cols));
     imText.rowRange(im.rows,imText.rows) = cv::Mat::zeros(textSize.height+10,im.cols,im.type());
     cv::putText(imText,s.str(),cv::Point(5,imText.rows-5),cv::FONT_HERSHEY_PLAIN,1,cv::Scalar(255,255,255),1,8);
@@ -198,6 +208,18 @@ void FrameDrawer::Update(Tracking *pTracker)
         }
     }
     mState=static_cast<int>(pTracker->mLastProcessedState);
+}
+
+cv::Mat FrameDrawer::RetrieveFrame() {
+    for(;;) {
+        for(size_t buffer_id=1;buffer_id<2;++buffer_id) {
+            std::unique_lock<std::mutex> lock{mOutputImages.mMutexes.at(buffer_id), std::defer_lock_t{}};
+            if(lock.try_lock()) {
+                std::swap(mOutputImages.mImageBuffers.at(0), mOutputImages.mImageBuffers[buffer_id]);
+                return  mOutputImages.mImageBuffers.at(0);
+            }
+        }
+    }
 }
 
 } //namespace ORB_SLAM
