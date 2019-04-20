@@ -113,6 +113,9 @@ public:
     // See format details at: http://www.cvlibs.net/datasets/kitti/eval_odometry.php
     void SaveTrajectoryKITTI(const string &filename);
 
+    // returns : vector<pair<timestamp, pose>>
+    std::vector<std::pair<double, cv::Mat>> GetTrajectory() const;
+
     // TODO: Save/Load functions
     // SaveMap(const string &filename);
     // LoadMap(const string &filename);
