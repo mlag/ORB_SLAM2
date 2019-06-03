@@ -129,6 +129,8 @@ public:
     // Graphical Output
     cv::Mat RetrieveOutputImage();
 
+    bool WasReset() const {return mbWasReset;}
+
 private:
 
     // Input sensor
@@ -170,6 +172,7 @@ private:
     // Reset flag
     std::mutex mMutexReset;
     bool mbReset;
+    bool mbWasReset;
 
     // Change mode flags
     std::mutex mMutexMode;

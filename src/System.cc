@@ -153,6 +153,10 @@ cv::Mat System::TrackStereo(const cv::Mat &imLeft, const cv::Mat &imRight, const
     {
         mpTracker->Reset();
         mbReset = false;
+        mbWasReset = true;
+    }
+    else {
+        mbWasReset = false;
     }
     }
 
@@ -204,6 +208,10 @@ cv::Mat System::TrackRGBD(const cv::Mat &im, const cv::Mat &depthmap, const doub
     {
         mpTracker->Reset();
         mbReset = false;
+        mbWasReset = true;
+    }
+    else {
+        mbWasReset = false;
     }
     }
 
@@ -255,6 +263,10 @@ cv::Mat System::TrackMonocular(const cv::Mat &im, const double &timestamp)
     {
         mpTracker->Reset();
         mbReset = false;
+        mbWasReset = true;
+    }
+    else {
+        mbWasReset = false;
     }
     }
 
